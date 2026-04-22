@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tarea 2</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .loading-indicator {
+            display: none;
+            color: #666;
+            font-style: italic;
+        }
+
+        .htmx-request .loading-indicator {
+            display: inline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>Carga de Datos</h1>
+        <p>Sube el archivo XML</p>
+
+        <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado-ajax"
+            hx-indicator=".loading-indicator">
+
+            <input type="file" name="archivo_xml" accept=".xml" required>
+            <br>
+            <button type="submit">Ejecutar SP</button>
+            <span class="loading-indicator">Procesando en SQL Server...</span>
+        </form>
+
+        <div id="resultado-ajax" style="margin-top: 20px;"></div>
+    </div>
+</body>
+
+</html>

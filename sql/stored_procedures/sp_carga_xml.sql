@@ -2,7 +2,7 @@
 USE mi_db;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_cargar_datos_xml
+CREATE OR ALTER PROCEDURE dbo.sp_carga_xml
   @xml XML
 AS
 BEGIN

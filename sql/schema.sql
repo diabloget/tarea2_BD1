@@ -1,4 +1,7 @@
-CREATE DATABASE mi_db;
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'mi_db')
+BEGIN
+  CREATE DATABASE mi_db;
+END
 GO
 
 USE mi_db;
@@ -109,7 +112,7 @@ CREATE TABLE dbo.DBError (
   State     INT          NULL,
   Severity  INT          NULL,
   Line      INT          NULL,
-  Procedure VARCHAR(128) NULL,
+  [Procedure] VARCHAR(128) NULL,
   Message   VARCHAR(MAX) NULL,
   DateTime  DATETIME     NOT NULL DEFAULT GETDATE()
 );
