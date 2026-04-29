@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control de Vacaciones</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #0e0e0e;
+            --surface: #161616;
+            --border: #2a2a2a;
+            --accent: #00d4ff;
+            --text: #e8e8e8;
+            --muted: #666;
+            --error: #f87171;
+            --mono: 'IBM Plex Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            max-width: 960px;
+            margin: 0 auto 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-family: var(--mono);
+            font-size: 1rem;
+            color: var(--accent);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        header span {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        section h2 {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-row input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            outline: none;
+        }
+
+        .filter-row input:focus {
+            border-color: var(--accent);
+        }
+
+        .filter-row button {
+            background: var(--surface);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 0.65rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #1c1c1c;
+        }
+
+        tbody td {
+            padding: 0.7rem 1rem;
+        }
+
+        tbody td:first-child {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .acciones {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-accion {
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.6rem;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .btn-accion:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+        }
+
+        .upload-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input[type=file] {
+            color: var(--muted);
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .submit-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.6rem 1.25rem;
+            cursor: pointer;
+        }
+
+        .htmx-indicator {
+            display: none;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+
+        .htmx-request .htmx-indicator {
+            display: inline;
+        }
+
+        #resultado-xml {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Control de Vacaciones</h1>
+            <span>BD1</span>
+        </div>
+        <form method="POST" action="/logout" style="display:inline">
+            <button class="logout-btn" type="submit">Cerrar sesión</button>
+        </form>
+    </header>
+
+    <main>
+        <section>
+            <h2>Empleados</h2>
+            <div class="filter-row">
+                <input type="text" id="filtro" name="filtro" placeholder="Filtrar por nombre o cédula..."
+                    hx-get="/api/empleados" hx-trigger="keyup changed delay:400ms" hx-target="#tabla-body"
+                    hx-include="#filtro" />
+                <button hx-get="/api/empleados" hx-target="#tabla-body" hx-include="#filtro">
+                    Filtrar
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cédula</th>
+                            <th>Nombre</th>
+                            <th>Puesto</th>
+                            <th>Saldo Vacaciones</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body" hx-get="/api/empleados" hx-trigger="load">
+                        <tr class="empty-row">
+                            <td colspan="5">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Cargar datos XML</h2>
+            <div class="card">
+                <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado-xml"
+                    hx-indicator=".htmx-indicator"
+                    hx-on::after-request="if(event.detail.successful) htmx.trigger('#tabla-body', 'load')">
+                    <div class="upload-row">
+                        <input type="file" name="archivo_xml" accept=".xml" required />
+                        <button class="submit-btn" type="submit">Cargar XML</button>
+                        <span class="htmx-indicator">Procesando...</span>
+                    </div>
+                </form>
+                <div id="resultado-xml"></div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
