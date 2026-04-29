@@ -9,7 +9,7 @@ set :public_folder, '/frontend'
 # Sesiones para login/logout
 use Rack::Session::Cookie,
   key:    'tarea2.session',
-  secret: ENV.fetch('SESSION_SECRET', 'cambiar_en_produccion'),
+  secret: ENV.fetch('SESSION_SECRET', 'LaContraseñaTieneQueExcederSesentayCuatroCaracteresParaSerQueRubyLaAcepte'),
   expire_after: 3600
 
 # Helper para contar filas 
