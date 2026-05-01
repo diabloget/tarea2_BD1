@@ -15,7 +15,6 @@
             --text: #e8e8e8;
             --muted: #666;
             --error: #f87171;
-            --mono: 'IBM Plex Mono', monospace;
         }
 
         * {
@@ -43,7 +42,7 @@
         }
 
         header h1 {
-            font-family: var(--mono);
+            font-family: monospace;
             font-size: 1rem;
             color: var(--accent);
             letter-spacing: 0.08em;
@@ -79,7 +78,7 @@
         }
 
         section h2 {
-            font-family: var(--mono);
+            font-family: monospace;
             font-size: 0.65rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -130,7 +129,7 @@
         }
 
         thead th {
-            font-family: var(--mono);
+            font-family: monospace;
             font-size: 0.65rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -159,7 +158,7 @@
         }
 
         tbody td:first-child {
-            font-family: var(--mono);
+            font-family: monospace;
             font-size: 0.78rem;
             color: var(--muted);
         }
@@ -244,13 +243,12 @@
     <header>
         <div>
             <h1>Control de Vacaciones</h1>
-            <span>BD1</span>
+            <span>Bases de Datos I — ITCR</span>
         </div>
         <form method="POST" action="/logout" style="display:inline">
             <button class="logout-btn" type="submit">Cerrar sesión</button>
         </form>
     </header>
-
     <main>
         <section>
             <h2>Empleados</h2>
@@ -258,9 +256,7 @@
                 <input type="text" id="filtro" name="filtro" placeholder="Filtrar por nombre o cédula..."
                     hx-get="/api/empleados" hx-trigger="keyup changed delay:400ms" hx-target="#tabla-body"
                     hx-include="#filtro" />
-                <button hx-get="/api/empleados" hx-target="#tabla-body" hx-include="#filtro">
-                    Filtrar
-                </button>
+                <button hx-get="/api/empleados" hx-target="#tabla-body" hx-include="#filtro">Filtrar</button>
             </div>
             <div class="table-wrapper">
                 <table>
@@ -281,7 +277,6 @@
                 </table>
             </div>
         </section>
-
         <section>
             <h2>Cargar datos XML</h2>
             <div class="card">
