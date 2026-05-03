@@ -5,8 +5,10 @@ require_relative 'config/database'
 set :bind, '0.0.0.0'
 set :port, 3000
 set :public_folder, '/frontend'
+
 VIEWS = '/frontend/views'
 
+# Tiene que tener un secrect de más de 64 chars
 SESSION_SECRET = ENV.fetch('SESSION_SECRET',
   'LaContraseñaTieneQueExcederSesentayCuatroCaracteresParaSerQueRubyLaAcepte')
 
@@ -21,24 +23,26 @@ def contar(tabla)
   end
 end
 
+# Impone login por si no hubiese sesion activa
 def require_login
   redirect '/login' unless session[:usuario]
 end
 
-# Rutas Publicas
+# Rutas públicas 
 
 get '/login' do
   redirect '/' if session[:usuario]
   File.read("#{VIEWS}/login.html")
 end
 
+# Pantalla de carga inicial publica para pruebas
 get '/setup' do
   File.read("#{VIEWS}/setup.html")
 end
- 
+
 post '/cargar-xml' do
   unless params[:archivo_xml]
-    return "<div style='color:#f87171'>Error: No se seleccionó ningún archivo.</div>"
+    return "<div style='color:#9b3a3a'>Error: no se seleccionó ningún archivo.</div>"
   end
 
   xml_content = params[:archivo_xml][:tempfile].read
@@ -61,19 +65,16 @@ post '/cargar-xml' do
     empleados   = contar('Empleado')
     movimientos = contar('Movimiento')
 
-    "<div style='background:#052e16;color:#4ade80;padding:1rem;border:1px solid #166534;border-radius:4px'>" \
-    "<strong>Carga exitosa.</strong> " \
-    "#{puestos} puestos · #{empleados} empleados · #{movimientos} movimientos." \
-    "<br><br><a href='/login' style='color:#00d4ff;font-size:0.85rem'>→ Ir al login</a>" \
+    "<div style='color:#2d5a4e;font-size:0.85rem'>" \
+    "Carga completada — #{puestos} puestos · #{empleados} empleados · #{movimientos} movimientos." \
     "</div>"
   rescue => e
     puts "ERROR carga XML: #{e.message}"
-    "<div style='background:#2a0a0a;color:#f87171;padding:1rem;border:1px solid #7f1d1d;border-radius:4px'>" \
-    "<strong>Error:</strong> #{e.message}</div>"
+    "<div style='color:#9b3a3a;font-size:0.85rem'>Error: #{e.message}</div>"
   end
 end
 
-# Rutas protegidas (login requerido)
+# Rutas protegidas (login)
 
 get '/' do
   require_login

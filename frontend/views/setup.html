@@ -4,18 +4,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Carga Inicial — Control de Vacaciones</title>
+    <title>Carga de datos — Gestión de Vacaciones</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+        rel="stylesheet" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         :root {
-            --bg: #0e0e0e;
-            --surface: #161616;
-            --border: #2a2a2a;
-            --accent: #00d4ff;
-            --text: #e8e8e8;
-            --muted: #666;
-            --error: #f87171;
-            --success: #4ade80;
+            --bg: #f5f4f0;
+            --surface: #ffffff;
+            --border: #e2e0da;
+            --text: #1a1916;
+            --muted: #8a8880;
+            --accent: #2d5a4e;
+            --accent-h: #234840;
+            --success: #1e4d3a;
+            --error: #6b2020;
         }
 
         * {
@@ -25,7 +30,7 @@
         }
 
         body {
-            font-family: sans-serif;
+            font-family: 'DM Sans', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
@@ -34,28 +39,33 @@
             justify-content: center;
         }
 
+        .wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            padding: 1rem;
+        }
+
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            position: relative;
+            padding: 3rem 2.5rem 2.75rem;
+            box-shadow: 0 2px 24px rgba(0, 0, 0, 0.06);
         }
 
-        h1 {
-            font-family: monospace;
-            font-size: 1rem;
+        .brand {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.7rem;
             color: var(--accent);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.01em;
         }
 
-        .subtitle {
-            font-size: 0.75rem;
+        .tagline {
+            font-size: 0.78rem;
             color: var(--muted);
-            margin-bottom: 2rem;
+            font-weight: 300;
+            margin-bottom: 2.5rem;
         }
 
         .field {
@@ -66,42 +76,44 @@
         }
 
         label {
-            font-size: 0.65rem;
-            letter-spacing: 0.12em;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.07em;
             text-transform: uppercase;
             color: var(--muted);
         }
 
         input[type=file] {
-            color: var(--text);
-            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--muted);
+            width: 100%;
         }
 
-        button[type=submit] {
+        .btn-primary {
             width: 100%;
             background: var(--accent);
-            color: #000;
+            color: #fff;
             border: none;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
             padding: 0.75rem;
             cursor: pointer;
-            margin-top: 0.25rem;
+            transition: background 0.15s;
         }
 
-        button[type=submit]:hover {
-            opacity: 0.85;
+        .btn-primary:hover {
+            background: var(--accent-h);
         }
 
         .htmx-indicator {
             display: none;
+            font-size: 0.78rem;
             color: var(--muted);
-            font-size: 0.8rem;
             font-style: italic;
             margin-top: 0.75rem;
-            text-align: center;
         }
 
         .htmx-request .htmx-indicator {
@@ -109,23 +121,24 @@
         }
 
         #resultado {
-            margin-top: 1.25rem;
+            margin-top: 1rem;
             font-size: 0.85rem;
+            line-height: 1.5;
         }
 
-        .back-link {
+        .corner-link {
             position: absolute;
-            top: 1rem;
+            bottom: 1.6rem;
             left: 1rem;
-            font-size: 0.65rem;
+            font-size: 0.68rem;
             color: var(--muted);
             text-decoration: none;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            letter-spacing: 0.04em;
             border-bottom: 1px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
         }
 
-        .back-link:hover {
+        .corner-link:hover {
             color: var(--accent);
             border-color: var(--accent);
         }
@@ -133,23 +146,24 @@
 </head>
 
 <body>
-    <div class="card">
-        <a class="back-link" href="/login">← Volver</a>
+    <div class="wrapper">
+        <div class="card">
+            <div class="brand">Carga de datos</div>
+            <div class="tagline">Importá el archivo XML con los datos iniciales del sistema.</div>
 
-        <h1>Carga Inicial</h1>
-        <p class="subtitle">Cargá el archivo XML con los datos de prueba del profesor.</p>
+            <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado"
+                hx-indicator=".htmx-indicator">
+                <div class="field">
+                    <label>Archivo XML</label>
+                    <input type="file" name="archivo_xml" accept=".xml" required />
+                </div>
+                <button class="btn-primary" type="submit">Cargar datos</button>
+                <div class="htmx-indicator">Procesando en base de datos...</div>
+            </form>
 
-        <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado"
-            hx-indicator=".htmx-indicator">
-            <div class="field">
-                <label>Archivo XML</label>
-                <input type="file" name="archivo_xml" accept=".xml" required />
-            </div>
-            <button type="submit">Cargar datos</button>
-            <div class="htmx-indicator">Procesando en SQL Server...</div>
-        </form>
-
-        <div id="resultado"></div>
+            <div id="resultado"></div>
+        </div>
+        <a class="corner-link" href="/login"> Volver a Login</a>
     </div>
 </body>
 
