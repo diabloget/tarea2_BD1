@@ -1,0 +1,13 @@
+USE mi_db;
+GO
+ 
+SET QUOTED_IDENTIFIER ON;
+GO
+ 
+CREATE OR ALTER PROCEDURE dbo.sp_listar_puestos
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SELECT Id, Nombre FROM dbo.Puesto ORDER BY Nombre ASC;
+END;
+GO

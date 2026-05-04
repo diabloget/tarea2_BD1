@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tarea 2 BD1</title>
+    <title>Gestión de Vacaciones</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
@@ -21,7 +21,6 @@
             --accent: #2d5a4e;
             --accent-h: #234840;
             --error: #9b3a3a;
-            --success: #2d5a4e;
         }
 
         * {
@@ -37,7 +36,6 @@
             min-height: 100vh;
         }
 
-        /* Header */
         header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -55,10 +53,13 @@
             letter-spacing: -0.01em;
         }
 
-        .btn-logout {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--muted);
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .btn-sm {
             font-family: 'DM Sans', sans-serif;
             font-size: 0.72rem;
             font-weight: 500;
@@ -66,15 +67,31 @@
             text-transform: uppercase;
             padding: 0.4rem 0.9rem;
             cursor: pointer;
-            transition: border-color 0.15s, color 0.15s;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
         }
 
-        .btn-logout:hover {
+        .btn-outline {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .btn-outline:hover {
             border-color: var(--error);
             color: var(--error);
         }
 
-        /* Layout */
+        .btn-accent {
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            color: #fff;
+        }
+
+        .btn-accent:hover {
+            background: var(--accent-h);
+            border-color: var(--accent-h);
+        }
+
         main {
             max-width: 1000px;
             margin: 2.5rem auto;
@@ -83,7 +100,6 @@
             gap: 2.5rem;
         }
 
-        /* Sección */
         .section-label {
             font-size: 0.65rem;
             font-weight: 500;
@@ -93,7 +109,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Filtro */
         .filter-row {
             display: flex;
             gap: 0.5rem;
@@ -127,7 +142,6 @@
             text-transform: uppercase;
             padding: 0.55rem 1.1rem;
             cursor: pointer;
-            transition: border-color 0.15s;
             white-space: nowrap;
         }
 
@@ -135,7 +149,6 @@
             border-color: var(--accent);
         }
 
-        /* Tabla */
         .table-wrapper {
             border: 1px solid var(--border);
             background: var(--surface);
@@ -175,7 +188,6 @@
 
         tbody td {
             padding: 0.75rem 1rem;
-            color: var(--text);
         }
 
         tbody td:first-child {
@@ -215,7 +227,6 @@
             font-style: italic;
         }
 
-        /* Carga XML */
         .upload-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -269,15 +280,128 @@
             margin-top: 1rem;
             font-size: 0.85rem;
         }
+
+        /* Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2rem 2rem 1.75rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .modal-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-field label {
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .form-field input,
+        .form-field select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            padding: 0.6rem 0.75rem;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.15s;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1.25rem;
+        }
+
+        .btn-cancel {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            padding: 0.55rem 1rem;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--muted);
+        }
+
+        .btn-save {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            padding: 0.55rem 1.25rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-h);
+        }
+
+        #msg-insertar {
+            font-size: 0.82rem;
+            min-height: 1.2rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 
 <body>
     <header>
-        <span class="header-brand">Tarea 2 BD1</span>
-        <form method="POST" action="/logout" style="display:inline">
-            <button class="btn-logout" type="submit">Cerrar sesión</button>
-        </form>
+        <span class="header-brand">Vacaciones</span>
+        <div class="header-actions">
+            <button class="btn-sm btn-accent" onclick="abrirModalInsertar()">+ Nuevo empleado</button>
+            <form method="POST" action="/logout" style="display:inline">
+                <button class="btn-sm btn-outline" type="submit">Cerrar sesión</button>
+            </form>
+        </div>
     </header>
 
     <main>
@@ -301,7 +425,7 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-body" hx-get="/api/empleados" hx-trigger="load">
+                    <tbody id="tabla-body" hx-get="/api/empleados" hx-trigger="load, empleadosActualizado from:body">
                         <tr class="empty-row">
                             <td colspan="5">Cargando...</td>
                         </tr>
@@ -315,7 +439,7 @@
             <div class="upload-card">
                 <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado-xml"
                     hx-indicator=".htmx-indicator"
-                    hx-on::after-request="if(event.detail.successful) htmx.trigger('#tabla-body', 'load')">
+                    hx-on::after-request="if(event.detail.successful) htmx.trigger('#tabla-body', 'empleadosActualizado')">
                     <div class="upload-row">
                         <input type="file" name="archivo_xml" accept=".xml" required />
                         <button class="btn-upload" type="submit">Importar XML</button>
@@ -326,6 +450,52 @@
             </div>
         </section>
     </main>
+
+    <!-- insertar empleado -->
+    <div class="modal-backdrop" id="modal-insertar">
+        <div class="modal">
+            <div class="modal-title">Nuevo empleado</div>
+            <form hx-post="/api/empleados" hx-target="#msg-insertar"
+                hx-on::after-request="if(event.detail.successful && document.querySelector('#msg-insertar span[style*=2d5a4e]')) this.reset()">
+                <div class="form-field">
+                    <label>Cédula</label>
+                    <input type="text" name="cedula" required pattern="\d+" title="Solo números" />
+                </div>
+                <div class="form-field">
+                    <label>Nombre</label>
+                    <input type="text" name="nombre" required />
+                </div>
+                <div class="form-field">
+                    <label>Puesto</label>
+                    <select name="id_puesto" required hx-get="/api/puestos" hx-trigger="load" hx-target="this">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Fecha de contratación</label>
+                    <input type="date" name="fecha_contratacion" required />
+                </div>
+                <div id="msg-insertar"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalInsertar()">Cancelar</button>
+                    <button type="submit" class="btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalInsertar() {
+            document.getElementById('modal-insertar').classList.add('open');
+        }
+        function cerrarModalInsertar() {
+            document.getElementById('modal-insertar').classList.remove('open');
+            document.getElementById('msg-insertar').innerHTML = '';
+        }
+        document.getElementById('modal-insertar').addEventListener('click', function (e) {
+            if (e.target === this) cerrarModalInsertar();
+        });
+    </script>
 </body>
 
 </html>
