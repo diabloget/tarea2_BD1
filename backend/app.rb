@@ -8,7 +8,6 @@ set :public_folder, '/frontend'
 
 VIEWS = '/frontend/views'
 
-# Tiene que tener un secrect de más de 64 chars
 SESSION_SECRET = ENV.fetch('SESSION_SECRET',
   'LaContraseñaTieneQueExcederSesentayCuatroCaracteresParaSerQueRubyLaAcepte')
 
@@ -23,19 +22,26 @@ def contar(tabla)
   end
 end
 
-# Impone login por si no hubiese sesion activa
 def require_login
   redirect '/login' unless session[:usuario]
 end
 
-# Rutas públicas 
-
-get '/login' do
-  redirect '/' if session[:usuario]
-  File.read("#{VIEWS}/login.html")
+def no_cache
+  headers 'Cache-Control' => 'no-store, no-cache, must-revalidate',
+          'Pragma'         => 'no-cache',
+          'Expires'        => '0'
 end
 
-# Pantalla de carga inicial publica para pruebas
+# Rutas públicas
+
+get '/login' do
+  no_cache
+  redirect '/' if session[:usuario]
+  error_msg = session.delete(:login_error)
+  html = File.read("#{VIEWS}/login.html")
+  error_msg ? html.sub('id="login-error"', "id='login-error' style='display:block'").sub('LOGIN_ERROR', error_msg) : html
+end
+
 get '/setup' do
   File.read("#{VIEWS}/setup.html")
 end
@@ -60,11 +66,9 @@ post '/cargar-xml' do
 
   begin
     Database.query { |db| db.execute(sql_batch).do }
-
     puestos     = contar('Puesto')
     empleados   = contar('Empleado')
     movimientos = contar('Movimiento')
-
     "<div style='color:#2d5a4e;font-size:0.85rem'>" \
     "Carga completada — #{puestos} puestos · #{empleados} empleados · #{movimientos} movimientos." \
     "</div>"
@@ -78,6 +82,7 @@ end
 
 get '/' do
   require_login
+  no_cache
   File.read("#{VIEWS}/index.html")
 end
 

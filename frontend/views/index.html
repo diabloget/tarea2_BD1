@@ -50,7 +50,6 @@
             font-family: 'DM Serif Display', serif;
             font-size: 1.15rem;
             color: var(--accent);
-            letter-spacing: -0.01em;
         }
 
         .header-actions {
@@ -67,12 +66,13 @@
             text-transform: uppercase;
             padding: 0.4rem 0.9rem;
             cursor: pointer;
-            transition: border-color 0.15s, color 0.15s, background 0.15s;
+            border: 1px solid transparent;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
 
         .btn-outline {
             background: none;
-            border: 1px solid var(--border);
+            border-color: var(--border);
             color: var(--muted);
         }
 
@@ -83,7 +83,7 @@
 
         .btn-accent {
             background: var(--accent);
-            border: 1px solid var(--accent);
+            border-color: var(--accent);
             color: #fff;
         }
 
@@ -281,12 +281,11 @@
             font-size: 0.85rem;
         }
 
-        /* Modal */
         .modal-backdrop {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(0, 0, 0, 0.3);
             z-index: 100;
             align-items: center;
             justify-content: center;
@@ -299,10 +298,10 @@
         .modal {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 2rem 2rem 1.75rem;
+            padding: 2rem;
             width: 100%;
             max-width: 440px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .modal-title {
@@ -345,6 +344,11 @@
             border-color: var(--accent);
         }
 
+        .form-field input[readonly] {
+            color: var(--muted);
+            cursor: default;
+        }
+
         .modal-actions {
             display: flex;
             gap: 0.5rem;
@@ -359,13 +363,8 @@
             font-family: 'DM Sans', sans-serif;
             font-size: 0.78rem;
             font-weight: 500;
-            letter-spacing: 0.04em;
             padding: 0.55rem 1rem;
             cursor: pointer;
-        }
-
-        .btn-cancel:hover {
-            border-color: var(--muted);
         }
 
         .btn-save {
@@ -375,7 +374,6 @@
             font-family: 'DM Sans', sans-serif;
             font-size: 0.78rem;
             font-weight: 500;
-            letter-spacing: 0.04em;
             padding: 0.55rem 1.25rem;
             cursor: pointer;
             transition: background 0.15s;
@@ -385,7 +383,7 @@
             background: var(--accent-h);
         }
 
-        #msg-insertar {
+        .msg {
             font-size: 0.82rem;
             min-height: 1.2rem;
             margin-top: 0.5rem;
@@ -397,7 +395,7 @@
     <header>
         <span class="header-brand">Vacaciones</span>
         <div class="header-actions">
-            <button class="btn-sm btn-accent" onclick="abrirModalInsertar()">+ Nuevo empleado</button>
+            <button class="btn-sm btn-accent" onclick="abrirModal('modal-insertar')">+ Nuevo empleado</button>
             <form method="POST" action="/logout" style="display:inline">
                 <button class="btn-sm btn-outline" type="submit">Cerrar sesión</button>
             </form>
@@ -451,15 +449,14 @@
         </section>
     </main>
 
-    <!-- insertar empleado -->
+    <!-- Modal de insercion -->
     <div class="modal-backdrop" id="modal-insertar">
         <div class="modal">
             <div class="modal-title">Nuevo empleado</div>
-            <form hx-post="/api/empleados" hx-target="#msg-insertar"
-                hx-on::after-request="if(event.detail.successful && document.querySelector('#msg-insertar span[style*=2d5a4e]')) this.reset()">
+            <form hx-post="/api/empleados" hx-target="#msg-insertar">
                 <div class="form-field">
                     <label>Cédula</label>
-                    <input type="text" name="cedula" required pattern="\d+" title="Solo números" />
+                    <input type="text" name="cedula" required pattern="\d+" />
                 </div>
                 <div class="form-field">
                     <label>Nombre</label>
@@ -475,26 +472,119 @@
                     <label>Fecha de contratación</label>
                     <input type="date" name="fecha_contratacion" required />
                 </div>
-                <div id="msg-insertar"></div>
+                <div class="msg" id="msg-insertar"></div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="cerrarModalInsertar()">Cancelar</button>
+                    <button type="button" class="btn-cancel"
+                        onclick="cerrarModal('modal-insertar','msg-insertar')">Cancelar</button>
                     <button type="submit" class="btn-save">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal de consulta -->
+    <div class="modal-backdrop" id="modal-consultar">
+        <div class="modal">
+            <div class="modal-title">Detalle del empleado</div>
+            <div class="form-field"><label>Cédula</label><input type="text" id="c-cedula" readonly /></div>
+            <div class="form-field"><label>Nombre</label><input type="text" id="c-nombre" readonly /></div>
+            <div class="form-field"><label>Puesto</label><input type="text" id="c-puesto" readonly /></div>
+            <div class="form-field"><label>Saldo vacaciones</label><input type="text" id="c-saldo" readonly /></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="cerrarModal('modal-consultar')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar -->
+    <div class="modal-backdrop" id="modal-editar">
+        <div class="modal">
+            <div class="modal-title">Editar empleado</div>
+            <form id="form-editar" hx-target="#msg-editar" hx-encoding="application/x-www-form-urlencoded">
+                <input type="hidden" name="_method" value="PUT" />
+                <div class="form-field"><label>Cédula</label><input type="text" name="cedula" id="e-cedula" required
+                        pattern="\d+" /></div>
+                <div class="form-field"><label>Nombre</label><input type="text" name="nombre" id="e-nombre" required />
+                </div>
+                <div class="form-field">
+                    <label>Puesto</label>
+                    <select name="id_puesto" id="e-puesto" required hx-get="/api/puestos" hx-trigger="load"
+                        hx-target="this">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div class="msg" id="msg-editar"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel"
+                        onclick="cerrarModal('modal-editar','msg-editar')">Cancelar</button>
+                    <button type="submit" class="btn-save">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        function abrirModalInsertar() {
-            document.getElementById('modal-insertar').classList.add('open');
+        function abrirModal(id) {
+            document.getElementById(id).classList.add('open');
         }
-        function cerrarModalInsertar() {
-            document.getElementById('modal-insertar').classList.remove('open');
-            document.getElementById('msg-insertar').innerHTML = '';
+
+        function cerrarModal(id, msgId) {
+            document.getElementById(id).classList.remove('open');
+            if (msgId) document.getElementById(msgId).innerHTML = '';
         }
-        document.getElementById('modal-insertar').addEventListener('click', function (e) {
-            if (e.target === this) cerrarModalInsertar();
+
+        // Cerrar al hacer click afuera
+        document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === this) this.classList.remove('open');
+            });
         });
+
+        function abrirConsulta(id) {
+            fetch('/api/empleados/' + id)
+                .then(function (r) { return r.json(); })
+                .then(function (e) {
+                    document.getElementById('c-cedula').value = e.cedula;
+                    document.getElementById('c-nombre').value = e.nombre;
+                    document.getElementById('c-puesto').value = e.puesto;
+                    document.getElementById('c-saldo').value = e.saldo;
+                    abrirModal('modal-consultar');
+                });
+        }
+
+        function abrirEditar(id) {
+            fetch('/api/empleados/' + id)
+                .then(function (r) { return r.json(); })
+                .then(function (e) {
+                    document.getElementById('e-cedula').value = e.cedula;
+                    document.getElementById('e-nombre').value = e.nombre;
+                    var sel = document.getElementById('e-puesto');
+                    for (var i = 0; i < sel.options.length; i++) {
+                        if (parseInt(sel.options[i].value) === e.id_puesto) {
+                            sel.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    var form = document.getElementById('form-editar');
+                    form.setAttribute('hx-put', '/api/empleados/' + id);
+                    htmx.process(form);
+                    abrirModal('modal-editar');
+                });
+        }
+
+        function confirmarBorrado(id, nombre, cedula) {
+            // Registrar el intento primero
+            fetch('/api/empleados/' + id + '/intento-borrado', { method: 'POST' });
+
+            var confirmado = confirm(
+                'Cédula: ' + cedula + '\nNombre: ' + nombre + '\n\n¿Está seguro de eliminar este empleado?'
+            );
+
+            if (confirmado) {
+                fetch('/api/empleados/' + id, { method: 'DELETE' })
+                    .then(function () { htmx.trigger(document.body, 'empleadosActualizado'); });
+            }
+        }
     </script>
 </body>
 
