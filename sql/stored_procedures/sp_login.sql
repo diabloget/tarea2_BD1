@@ -5,73 +5,70 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_login
-  @Username VARCHAR(64),
-  @Password VARCHAR(128),
-  @IP       VARCHAR(45),
-  @Codigo   INT OUTPUT  -- exito si 0
+  @inUsername    VARCHAR(64)
+, @inPassword    VARCHAR(128)
+, @inIP          VARCHAR(45)
+, @outResultCode INT OUTPUT 
 AS
 BEGIN
   SET NOCOUNT ON;
 
-  DECLARE @IdUsuario    INT;
-  DECLARE @IdTipoEvento INT;
-  DECLARE @Intentos     INT;
-  DECLARE @Descripcion  VARCHAR(MAX);
+
+  DECLARE @vIdUsuario INT;
+  DECLARE @vIntentos  INT;
+  DECLARE @vDescripcion VARCHAR(MAX);
 
   -- Verificar si el usuario existe
-  SELECT @IdUsuario = Id
-  FROM dbo.Usuario
-  WHERE Username = @Username;
-
-  IF @IdUsuario IS NULL
+    SELECT @vIdUsuario = U.Id
+  FROM   dbo.Usuario U
+  WHERE  (U.Username = @inUsername);
+ 
+  IF (@vIdUsuario IS NULL)
   BEGIN
-    SET @Codigo = 50001; -- Username no existe
+    SET @outResultCode = 50001;
 
     -- Registrar intento fallido
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-    VALUES (2, 'Username no existe: ' + @Username, 1, @IP, GETDATE());
-
+    VALUES (2, 'Username no existe: ' + @inUsername, 1, @inIP, GETDATE());
     RETURN;
   END
 
-  -- Verificar si está deshabilitado 
-  SELECT @Intentos = COUNT(*)
-  FROM dbo.BitacoraEvento
-  WHERE IdPostByUser = @IdUsuario
-    AND IdTipoEvento = 2
-    AND PostTime >= DATEADD(MINUTE, -20, GETDATE());
 
-  IF @Intentos >= 5
+  -- Verificar intentos fallidos
+  SELECT @vIntentos = COUNT(*)
+  FROM   dbo.BitacoraEvento BE
+  WHERE  (BE.IdPostByUser = @vIdUsuario)
+  AND    (BE.IdTipoEvento = 2)
+  AND    (BE.PostTime >= DATEADD(MINUTE, -20, GETDATE()));
+
+  IF (@vIntentos >= 5)
   BEGIN
-    SET @Codigo = 50003; -- Login deshabilitado
-
+    SET @outResultCode = 50003;
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-    VALUES (3, NULL, @IdUsuario, @IP, GETDATE());
-
+    VALUES (3, NULL, @vIdUsuario, @inIP, GETDATE());
     RETURN;
   END
-
+ 
   -- Verificar contraseña
-  IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE Id = @IdUsuario AND Password = @Password)
+  IF NOT EXISTS (SELECT 1 FROM dbo.Usuario U WHERE (U.Id = @vIdUsuario) AND (U.Password = @inPassword))
   BEGIN
-    SET @Codigo = 50002; -- Password incorrecta
-
-    SET @Intentos = @Intentos + 1;
-    SET @Descripcion = 'Intento ' + CAST(@Intentos AS VARCHAR) + ' en los últimos 20 minutos. Código: 50002';
-
+    SET @outResultCode = 50002;
+    SET @vIntentos = @vIntentos + 1;
+    SET @vDescripcion = 'Intento ' + CAST(@vIntentos AS VARCHAR) + ' en los últimos 20 minutos. Código: 50002';
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-    VALUES (2, @Descripcion, @IdUsuario, @IP, GETDATE());
-
+    VALUES (2, @vDescripcion, @vIdUsuario, @inIP, GETDATE());
     RETURN;
   END
-
-  -- Login exitoso
-  SET @Codigo = 0;
-
+ 
+  SET @outResultCode = 0;
+ 
+  -- Registrar intento exitoso
   INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-  VALUES (1, 'Exitoso', @IdUsuario, @IP, GETDATE());
-
-  -- Devolver datos de usuario
-  SELECT Id, Username FROM dbo.Usuario WHERE Id = @IdUsuario;
+  VALUES (1, 'Exitoso', @vIdUsuario, @inIP, GETDATE());
+ 
+  SELECT U.Id
+       , U.Username
+  FROM   dbo.Usuario U
+  WHERE  (U.Id = @vIdUsuario);
 END;
 GO

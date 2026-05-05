@@ -3,27 +3,32 @@ require_relative '../config/database'
 class Movimiento
   def self.por_empleado(id_empleado:)
     Database.query do |db|
-      db.execute("EXEC dbo.sp_listar_movimientos @IdEmpleado = #{id_empleado.to_i}").map { |f| f }
+      db.execute(
+        "DECLARE @outResultCode INT; " \
+        "EXEC dbo.sp_listar_movimientos @inIdEmpleado = #{id_empleado.to_i}, @outResultCode = @outResultCode OUTPUT;"
+      ).map { |f| f }
     end
   end
 
   def self.tipos
     Database.query do |db|
-      db.execute("EXEC dbo.sp_listar_tipos_movimiento").map { |f| f }
+      db.execute(
+        "DECLARE @outResultCode INT; EXEC dbo.sp_listar_tipos_movimiento @outResultCode = @outResultCode OUTPUT;"
+      ).map { |f| f }
     end
   end
 
   def self.insertar(id_empleado:, id_tipo:, monto:, id_usuario:, ip:)
     Database.query do |db|
-      sql = "DECLARE @Codigo INT; " \
+      sql = "DECLARE @outResultCode INT; " \
             "EXEC dbo.sp_insertar_movimiento " \
-            "  @IdEmpleado       = #{id_empleado.to_i}, " \
-            "  @IdTipoMovimiento = #{id_tipo.to_i}, " \
-            "  @Monto            = #{monto.to_f}, " \
-            "  @IdPostByUser     = #{id_usuario.to_i}, " \
-            "  @PostInIP         = N'#{ip}', " \
-            "  @Codigo           = @Codigo OUTPUT; " \
-            "SELECT @Codigo AS Codigo;"
+            "  @inIdEmpleado       = #{id_empleado.to_i}, " \
+            "  @inIdTipoMovimiento = #{id_tipo.to_i}, " \
+            "  @inMonto            = #{monto.to_f}, " \
+            "  @inIdPostByUser     = #{id_usuario.to_i}, " \
+            "  @inPostInIP         = N'#{ip}', " \
+            "  @outResultCode      = @outResultCode OUTPUT; " \
+            "SELECT @outResultCode AS Codigo;"
       db.execute(sql).first&.values&.first.to_i
     end
   end

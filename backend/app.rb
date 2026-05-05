@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?
 require_relative 'config/database'
+require_relative 'models/error_catalogo'
 
 set :bind, '0.0.0.0'
 set :port, 3000
@@ -62,7 +63,8 @@ post '/cargar-xml' do
               "SET ARITHABORT ON; " \
               "SET CONCAT_NULL_YIELDS_NULL ON; " \
               "SET NUMERIC_ROUNDABORT OFF; " \
-              "EXEC dbo.sp_carga_xml @xml = N'#{xml_escaped}';"
+              "DECLARE @outResultCode INT; " \
+              "EXEC dbo.sp_carga_xml @xml = N'#{xml_escaped}', @outResultCode = @outResultCode OUTPUT;"
 
   begin
     Database.query { |db| db.execute(sql_batch).do }
@@ -70,7 +72,7 @@ post '/cargar-xml' do
     empleados   = contar('Empleado')
     movimientos = contar('Movimiento')
     "<div style='color:#2d5a4e;font-size:0.85rem'>" \
-    "Carga completada — #{puestos} puestos · #{empleados} empleados · #{movimientos} movimientos." \
+    "Carga completada: #{puestos} puestos, #{empleados} empleados y #{movimientos} movimientos." \
     "</div>"
   rescue => e
     puts "ERROR carga XML: #{e.message}"
@@ -78,12 +80,29 @@ post '/cargar-xml' do
   end
 end
 
-# Rutas protegidas (login) 
+# Rutas protegidas
 
 get '/' do
   require_login
   no_cache
   File.read("#{VIEWS}/index.html")
+end
+
+# Esta ruta la agrego solo para verificar que sí está funcionando correctamente la lectura de errores. (debug)
+
+get '/debug/errores' do
+  resultados = []
+
+  [50001, 50002, 50003, 50004, 50005, 50006,
+   50007, 50008, 50009, 50010, 50011].each do |codigo|
+    desc = ErrorCatalogo.descripcion(codigo)
+    resultados << "<tr><td>#{codigo}</td><td>#{desc}</td></tr>"
+  end
+
+  "<table border='1' cellpadding='8' style='font-family:monospace'>
+    <tr><th>Código</th><th>Descripción desde BD</th></tr>
+    #{resultados.join}
+  </table>"
 end
 
 require_relative 'controllers/sesion_controller'

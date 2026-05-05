@@ -28,7 +28,7 @@ post '/login' do
     end
   rescue => e
     puts "ERROR login: #{e.message}"
-    session[:login_error] = 'Error de conexión con la base de datos.'
+    session[:login_error] = 'Posible error en la base de datos.'
     redirect '/login'
   end
 end

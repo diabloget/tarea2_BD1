@@ -5,68 +5,88 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_actualizar_empleado
-  @Id                      INT,
-  @ValorDocumentoIdentidad VARCHAR(20),
-  @Nombre                  VARCHAR(128),
-  @IdPuesto                INT,
-  @IdPostByUser            INT,
-  @PostInIP                VARCHAR(45),
-  @Codigo                  INT OUTPUT
+  @inId                      INT
+, @inValorDocumentoIdentidad VARCHAR(20)
+, @inNombre                  VARCHAR(128)
+, @inIdPuesto                INT
+, @inIdPostByUser            INT
+, @inPostInIP                VARCHAR(45)
+, @outResultCode             INT OUTPUT
 AS
 BEGIN
   SET NOCOUNT ON;
 
-  DECLARE @CedulaAntes VARCHAR(20), @NombreAntes VARCHAR(128), @PuestoAntes VARCHAR(128), @SaldoAntes DECIMAL(10,2);
-  DECLARE @NombrePuestoNuevo VARCHAR(128);
+  -- lecturas y validaciones
+  DECLARE @vCedulaAntes      VARCHAR(20);
+  DECLARE @vNombreAntes      VARCHAR(128);
+  DECLARE @vPuestoAntes      VARCHAR(128);
+  DECLARE @vSaldoAntes       DECIMAL(10,2);
+  DECLARE @vNombrePuestoNuevo VARCHAR(128);
 
-  SELECT
-    @CedulaAntes = e.ValorDocumentoIdentidad,
-    @NombreAntes = e.Nombre,
-    @PuestoAntes = p.Nombre,
-    @SaldoAntes  = e.SaldoVacaciones
-  FROM dbo.Empleado AS e
-  JOIN dbo.Puesto   AS p ON p.Id = e.IdPuesto
-  WHERE e.Id = @Id;
+  SELECT @vCedulaAntes = E.ValorDocumentoIdentidad
+       , @vNombreAntes = E.Nombre
+       , @vPuestoAntes = P.Nombre
+       , @vSaldoAntes  = E.SaldoVacaciones
+  FROM   dbo.Empleado E
+  JOIN   dbo.Puesto   P ON (P.Id = E.IdPuesto)
+  WHERE  (E.Id = @inId);
 
-  SELECT @NombrePuestoNuevo = Nombre FROM dbo.Puesto WHERE Id = @IdPuesto;
+  SELECT @vNombrePuestoNuevo = P.Nombre
+  FROM   dbo.Puesto P
+  WHERE  (P.Id = @inIdPuesto);
 
-  IF EXISTS (SELECT 1 FROM dbo.Empleado WHERE ValorDocumentoIdentidad = @ValorDocumentoIdentidad AND Id <> @Id AND EsActivo = 1)
+  IF EXISTS (SELECT 1 FROM dbo.Empleado E WHERE (E.ValorDocumentoIdentidad = @inValorDocumentoIdentidad) AND (E.Id <> @inId) AND (E.EsActivo = 1))
   BEGIN
-    SET @Codigo = 50006;
+    SET @outResultCode = 50006;
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
     VALUES (7,
-      'Error 50006 | Antes: ' + @CedulaAntes + ' / ' + @NombreAntes + ' / ' + @PuestoAntes +
-      ' | Después: ' + @ValorDocumentoIdentidad + ' / ' + @Nombre + ' / ' + ISNULL(@NombrePuestoNuevo,'') +
-      ' | Saldo: ' + CAST(@SaldoAntes AS VARCHAR),
-      @IdPostByUser, @PostInIP, GETDATE());
+      'Error 50006 | Antes: ' + @vCedulaAntes + ' / ' + @vNombreAntes + ' / ' + @vPuestoAntes +
+      ' | Después: ' + @inValorDocumentoIdentidad + ' / ' + @inNombre + ' / ' + ISNULL(@vNombrePuestoNuevo,'') +
+      ' | Saldo: ' + CAST(@vSaldoAntes AS VARCHAR),
+      @inIdPostByUser, @inPostInIP, GETDATE());
     RETURN;
   END
 
-  IF EXISTS (SELECT 1 FROM dbo.Empleado WHERE Nombre = @Nombre AND Id <> @Id AND EsActivo = 1)
+  IF EXISTS (SELECT 1 FROM dbo.Empleado E WHERE (E.Nombre = @inNombre) AND (E.Id <> @inId) AND (E.EsActivo = 1))
   BEGIN
-    SET @Codigo = 50007;
+    SET @outResultCode = 50007;
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
     VALUES (7,
-      'Error 50007 | Antes: ' + @CedulaAntes + ' / ' + @NombreAntes + ' / ' + @PuestoAntes +
-      ' | Después: ' + @ValorDocumentoIdentidad + ' / ' + @Nombre + ' / ' + ISNULL(@NombrePuestoNuevo,'') +
-      ' | Saldo: ' + CAST(@SaldoAntes AS VARCHAR),
-      @IdPostByUser, @PostInIP, GETDATE());
+      'Error 50007 | Antes: ' + @vCedulaAntes + ' / ' + @vNombreAntes + ' / ' + @vPuestoAntes +
+      ' | Después: ' + @inValorDocumentoIdentidad + ' / ' + @inNombre + ' / ' + ISNULL(@vNombrePuestoNuevo,'') +
+      ' | Saldo: ' + CAST(@vSaldoAntes AS VARCHAR),
+      @inIdPostByUser, @inPostInIP, GETDATE());
     RETURN;
   END
 
-  UPDATE dbo.Empleado
-  SET ValorDocumentoIdentidad = @ValorDocumentoIdentidad,
-      Nombre                  = @Nombre,
-      IdPuesto                = @IdPuesto
-  WHERE Id = @Id;
+  SET @outResultCode = 0;
 
-  SET @Codigo = 0;
+  -- transacción
+  BEGIN TRY
+    BEGIN TRANSACTION;
 
-  INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-  VALUES (8,
-    'Antes: ' + @CedulaAntes + ' / ' + @NombreAntes + ' / ' + @PuestoAntes +
-    ' | Después: ' + @ValorDocumentoIdentidad + ' / ' + @Nombre + ' / ' + ISNULL(@NombrePuestoNuevo,'') +
-    ' | Saldo: ' + CAST(@SaldoAntes AS VARCHAR),
-    @IdPostByUser, @PostInIP, GETDATE());
+    UPDATE dbo.Empleado
+    SET    ValorDocumentoIdentidad = @inValorDocumentoIdentidad
+         , Nombre                  = @inNombre
+         , IdPuesto                = @inIdPuesto
+    WHERE  (Id = @inId);
+
+    INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
+    VALUES (8,
+      'Antes: ' + @vCedulaAntes + ' / ' + @vNombreAntes + ' / ' + @vPuestoAntes +
+      ' | Después: ' + @inValorDocumentoIdentidad + ' / ' + @inNombre + ' / ' + ISNULL(@vNombrePuestoNuevo,'') +
+      ' | Saldo: ' + CAST(@vSaldoAntes AS VARCHAR),
+      @inIdPostByUser, @inPostInIP, GETDATE());
+
+    COMMIT TRANSACTION;
+  END TRY
+  BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    SET @outResultCode = ERROR_NUMBER() + 50000;
+    INSERT INTO dbo.DBError (UserName, Number, State, Severity, Line, [Procedure], Message, DateTime)
+    VALUES (SUSER_SNAME(), ERROR_NUMBER(), ERROR_STATE(), ERROR_SEVERITY(),
+            ERROR_LINE(), ERROR_PROCEDURE(), ERROR_MESSAGE(), GETDATE());
+    THROW;
+  END CATCH
 END;
 GO

@@ -5,42 +5,61 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_insertar_empleado
-  @ValorDocumentoIdentidad VARCHAR(20),
-  @Nombre                  VARCHAR(128),
-  @IdPuesto                INT,
-  @FechaContratacion       DATE,
-  @IdPostByUser            INT,
-  @PostInIP                VARCHAR(45),
-  @Codigo                  INT OUTPUT
+  @inValorDocumentoIdentidad VARCHAR(20)
+, @inNombre                  VARCHAR(128)
+, @inIdPuesto                INT
+, @inFechaContratacion       DATE
+, @inIdPostByUser            INT
+, @inPostInIP                VARCHAR(45)
+, @outResultCode             INT OUTPUT
 AS
 BEGIN
   SET NOCOUNT ON;
 
-  DECLARE @NombrePuesto VARCHAR(128);
-  SELECT @NombrePuesto = Nombre FROM dbo.Puesto WHERE Id = @IdPuesto;
+  -- validaciones y lecturas
+  DECLARE @vNombrePuesto VARCHAR(128);
 
-  IF EXISTS (SELECT 1 FROM dbo.Empleado WHERE ValorDocumentoIdentidad = @ValorDocumentoIdentidad AND EsActivo = 1)
+  SELECT @vNombrePuesto = P.Nombre
+  FROM   dbo.Puesto P
+  WHERE  (P.Id = @inIdPuesto);
+
+  IF EXISTS (SELECT 1 FROM dbo.Empleado E WHERE (E.ValorDocumentoIdentidad = @inValorDocumentoIdentidad) AND (E.EsActivo = 1))
   BEGIN
-    SET @Codigo = 50004;
+    SET @outResultCode = 50004;
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-    VALUES (5, 'Error 50004 | Cédula: ' + @ValorDocumentoIdentidad + ' | Nombre: ' + @Nombre + ' | Puesto: ' + ISNULL(@NombrePuesto, ''), @IdPostByUser, @PostInIP, GETDATE());
+    VALUES (5, 'Error 50004 | Cédula: ' + @inValorDocumentoIdentidad + ' | Nombre: ' + @inNombre + ' | Puesto: ' + ISNULL(@vNombrePuesto, ''), @inIdPostByUser, @inPostInIP, GETDATE());
     RETURN;
   END
 
-  IF EXISTS (SELECT 1 FROM dbo.Empleado WHERE Nombre = @Nombre AND EsActivo = 1)
+  IF EXISTS (SELECT 1 FROM dbo.Empleado E WHERE (E.Nombre = @inNombre) AND (E.EsActivo = 1))
   BEGIN
-    SET @Codigo = 50005;
+    SET @outResultCode = 50005;
     INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-    VALUES (5, 'Error 50005 | Cédula: ' + @ValorDocumentoIdentidad + ' | Nombre: ' + @Nombre + ' | Puesto: ' + ISNULL(@NombrePuesto, ''), @IdPostByUser, @PostInIP, GETDATE());
+    VALUES (5, 'Error 50005 | Cédula: ' + @inValorDocumentoIdentidad + ' | Nombre: ' + @inNombre + ' | Puesto: ' + ISNULL(@vNombrePuesto, ''), @inIdPostByUser, @inPostInIP, GETDATE());
     RETURN;
   END
 
-  INSERT INTO dbo.Empleado (IdPuesto, ValorDocumentoIdentidad, Nombre, FechaContratacion, SaldoVacaciones, EsActivo)
-  VALUES (@IdPuesto, @ValorDocumentoIdentidad, @Nombre, @FechaContratacion, 0, 1);
+  SET @outResultCode = 0;
 
-  SET @Codigo = 0;
+  -- transacción
+  BEGIN TRY
+    BEGIN TRANSACTION;
 
-  INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
-  VALUES (6, 'Cédula: ' + @ValorDocumentoIdentidad + ' | Nombre: ' + @Nombre + ' | Puesto: ' + ISNULL(@NombrePuesto, ''), @IdPostByUser, @PostInIP, GETDATE());
+    INSERT INTO dbo.Empleado (IdPuesto, ValorDocumentoIdentidad, Nombre, FechaContratacion, SaldoVacaciones, EsActivo)
+    VALUES (@inIdPuesto, @inValorDocumentoIdentidad, @inNombre, @inFechaContratacion, 0, 1);
+
+    INSERT INTO dbo.BitacoraEvento (IdTipoEvento, Descripcion, IdPostByUser, PostInIP, PostTime)
+    VALUES (6, 'Cédula: ' + @inValorDocumentoIdentidad + ' | Nombre: ' + @inNombre + ' | Puesto: ' + ISNULL(@vNombrePuesto, ''), @inIdPostByUser, @inPostInIP, GETDATE());
+
+    COMMIT TRANSACTION;
+  END TRY
+  BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    SET @outResultCode = ERROR_NUMBER() + 50000;
+    INSERT INTO dbo.DBError (UserName, Number, State, Severity, Line, [Procedure], Message, DateTime)
+    VALUES (SUSER_SNAME(), ERROR_NUMBER(), ERROR_STATE(), ERROR_SEVERITY(),
+            ERROR_LINE(), ERROR_PROCEDURE(), ERROR_MESSAGE(), GETDATE());
+    THROW;
+  END CATCH
 END;
 GO

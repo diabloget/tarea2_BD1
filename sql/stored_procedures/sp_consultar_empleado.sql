@@ -5,20 +5,33 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_consultar_empleado
-  @Id INT
+  @inId          INT
+, @outResultCode INT OUTPUT
 AS
 BEGIN
   SET NOCOUNT ON;
-  SELECT
-    e.Id,
-    e.ValorDocumentoIdentidad,
-    e.Nombre,
-    e.IdPuesto,
-    p.Nombre      AS Puesto,
-    e.FechaContratacion,
-    e.SaldoVacaciones
-  FROM dbo.Empleado AS e
-  JOIN dbo.Puesto   AS p ON p.Id = e.IdPuesto
-  WHERE e.Id = @Id AND e.EsActivo = 1;
+
+  BEGIN TRY
+    SELECT E.Id
+         , E.ValorDocumentoIdentidad
+         , E.Nombre
+         , E.IdPuesto
+         , P.Nombre      AS Puesto
+         , E.FechaContratacion
+         , E.SaldoVacaciones
+    FROM   dbo.Empleado E
+    JOIN   dbo.Puesto   P ON (P.Id = E.IdPuesto)
+    WHERE  (E.Id = @inId)
+    AND    (E.EsActivo = 1);
+
+    SET @outResultCode = 0;
+  END TRY
+  BEGIN CATCH
+    SET @outResultCode = ERROR_NUMBER() + 50000;
+    INSERT INTO dbo.DBError (UserName, Number, State, Severity, Line, [Procedure], Message, DateTime)
+    VALUES (SUSER_SNAME(), ERROR_NUMBER(), ERROR_STATE(), ERROR_SEVERITY(),
+            ERROR_LINE(), ERROR_PROCEDURE(), ERROR_MESSAGE(), GETDATE());
+    THROW;
+  END CATCH
 END;
 GO

@@ -149,7 +149,7 @@
     <div class="wrapper">
         <div class="card">
             <div class="brand">Carga de datos</div>
-            <div class="tagline">Importá el archivo XML con los datos iniciales del sistema.</div>
+            <div class="tagline">Adjunta XML con los datos a cargar en el sistema.</div>
 
             <form hx-post="/cargar-xml" hx-encoding="multipart/form-data" hx-target="#resultado"
                 hx-indicator=".htmx-indicator">
@@ -158,7 +158,7 @@
                     <input type="file" name="archivo_xml" accept=".xml" required />
                 </div>
                 <button class="btn-primary" type="submit">Cargar datos</button>
-                <div class="htmx-indicator">Procesando en base de datos...</div>
+                <div class="htmx-indicator">Procesando</div>
             </form>
 
             <div id="resultado"></div>

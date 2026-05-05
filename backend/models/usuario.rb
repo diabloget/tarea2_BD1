@@ -3,20 +3,19 @@ require_relative '../config/database'
 class Usuario
   def self.login(username:, password:, ip:)
     Database.query do |db|
-      sql = "DECLARE @Codigo INT; " \
+      sql = "DECLARE @outResultCode INT; " \
             "EXEC dbo.sp_login " \
-            "  @Username = N'#{username.gsub("'","''")}', " \
-            "  @Password = N'#{password.gsub("'","''")}', " \
-            "  @IP       = N'#{ip}', " \
-            "  @Codigo   = @Codigo OUTPUT; " \
-            "SELECT @Codigo AS Codigo;"
+            "  @inUsername    = N'#{username.gsub("'","''")}', " \
+            "  @inPassword    = N'#{password.gsub("'","''")}', " \
+            "  @inIP          = N'#{ip}', " \
+            "  @outResultCode = @outResultCode OUTPUT; " \
+            "SELECT @outResultCode AS Codigo;"
 
+      codigo  = nil
+      usuario = nil
+      result  = db.execute(sql)
       # Aqui el StoreProcedure deberia de devolver el SELECT de usuarios y un output
       # Entonces es nada mas iterar hasta que se encuentre el que tiene codigo
-      result = db.execute(sql)
-      codigo    = nil
-      usuario   = nil
-
       result.each(as: :hash) do |fila|
         if fila.key?('Codigo')
           codigo = fila['Codigo'].to_i
@@ -24,7 +23,6 @@ class Usuario
           usuario = fila
         end
       end
-
       { codigo: codigo, usuario: usuario }
     end
   end
@@ -32,7 +30,11 @@ class Usuario
   def self.logout(id_usuario:, ip:)
     Database.query do |db|
       db.execute(
-        "EXEC dbo.sp_logout @IdUsuario = #{id_usuario.to_i}, @IP = N'#{ip}'"
+        "DECLARE @outResultCode INT; " \
+        "EXEC dbo.sp_logout " \
+        "  @inIdUsuario   = #{id_usuario.to_i}, " \
+        "  @inIP          = N'#{ip}', " \
+        "  @outResultCode = @outResultCode OUTPUT;"
       ).do
     end
   end
