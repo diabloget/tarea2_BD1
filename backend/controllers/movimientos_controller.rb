@@ -1,5 +1,6 @@
 require_relative '../models/movimiento'
 require_relative '../models/empleado'
+require_relative '../models/error_catalogo'
 
 get '/api/empleados/:id/movimientos' do
   halt 401 unless session[:usuario]
@@ -8,8 +9,7 @@ get '/api/empleados/:id/movimientos' do
   halt 404 unless e
 
   movimientos = Movimiento.por_empleado(id_empleado: params[:id])
-
-  saldo = '%.2f' % e['SaldoVacaciones'].to_f
+  saldo       = '%.2f' % e['SaldoVacaciones'].to_f
 
   filas = if movimientos.empty?
     '<tr><td colspan="7" style="text-align:center;color:#b5b3ae;padding:2rem;font-style:italic;">Sin movimientos registrados.</td></tr>'
@@ -28,7 +28,6 @@ get '/api/empleados/:id/movimientos' do
     end.join
   end
 
-  # Devuelve fragmento HTML completo para el modal
   "<div class='mov-header'>
     <div>
       <div class='mov-nombre'>#{e['Nombre']}</div>
@@ -66,7 +65,6 @@ post '/api/empleados/:id/movimientos' do
   if id_tipo.empty? || monto.empty?
     return "<span style='color:#9b3a3a'>Todos los campos son requeridos.</span>"
   end
-
   unless monto.match?(/\A\d+(\.\d+)?\z/) && monto.to_f > 0
     return "<span style='color:#9b3a3a'>El monto debe ser un número positivo.</span>"
   end
@@ -79,13 +77,10 @@ post '/api/empleados/:id/movimientos' do
     ip:          request.ip
   )
 
-  case codigo
-  when 0
+  if codigo == 0
     headers 'HX-Trigger' => 'empleadosActualizado'
     "<span style='color:#2d5a4e'>Movimiento registrado correctamente.</span>"
-  when 50011
-    "<span style='color:#9b3a3a'>El monto generaría un saldo negativo.</span>"
   else
-    "<span style='color:#9b3a3a'>Error inesperado (código #{codigo}).</span>"
+    "<span style='color:#9b3a3a'>#{ErrorCatalogo.descripcion(codigo)}</span>"
   end
 end

@@ -1,5 +1,14 @@
 require_relative '../models/empleado'
 require_relative '../models/puesto'
+require_relative '../models/error_catalogo'
+
+def msg_error(codigo)
+  "<span style='color:#9b3a3a'>#{ErrorCatalogo.descripcion(codigo)}</span>"
+end
+
+def msg_ok(texto)
+  "<span style='color:#2d5a4e'>#{texto}</span>"
+end
 
 get '/api/empleados' do
   unless session[:usuario]
@@ -15,8 +24,8 @@ get '/api/empleados' do
   end
 
   empleados.map do |e|
-    id    = e['Id']
-    saldo = '%.2f' % e['SaldoVacaciones'].to_f
+    id             = e['Id']
+    saldo          = '%.2f' % e['SaldoVacaciones'].to_f
     nombre_escaped = e['Nombre'].gsub("'", "\\'").gsub('"', '&quot;')
     "<tr>
       <td>#{e['ValorDocumentoIdentidad']}</td>
@@ -57,25 +66,23 @@ post '/api/empleados' do
   fecha     = params[:fecha_contratacion].to_s.strip
 
   if cedula.empty? || nombre.empty? || id_puesto.empty? || fecha.empty?
-    return "<span style='color:#9b3a3a'>Todos los campos son requeridos.</span>"
+    return msg_error(0).sub('Error desconocido (código 0)', 'Todos los campos son requeridos.')
   end
   unless cedula.match?(/\A\d+\z/)
-    return "<span style='color:#9b3a3a'>La cédula debe ser numérica.</span>"
+    return msg_error(50010)
   end
   unless nombre.match?(/\A[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\-]+\z/)
-    return "<span style='color:#9b3a3a'>El nombre debe ser alfabético.</span>"
+    return msg_error(50009)
   end
 
   codigo = Empleado.crear(cedula: cedula, nombre: nombre, id_puesto: id_puesto,
     fecha_contratacion: fecha, id_usuario: session[:usuario_id], ip: request.ip)
 
-  case codigo
-  when 0
+  if codigo == 0
     headers 'HX-Trigger' => 'empleadosActualizado'
-    "<span style='color:#2d5a4e'>Empleado insertado correctamente.</span>"
-  when 50004 then "<span style='color:#9b3a3a'>Ya existe un empleado con esa cédula.</span>"
-  when 50005 then "<span style='color:#9b3a3a'>Ya existe un empleado con ese nombre.</span>"
-  else            "<span style='color:#9b3a3a'>Error inesperado (código #{codigo}).</span>"
+    msg_ok('Empleado insertado correctamente.')
+  else
+    msg_error(codigo)
   end
 end
 
@@ -87,25 +94,23 @@ put '/api/empleados/:id' do
   id_puesto = params[:id_puesto].to_s.strip
 
   if cedula.empty? || nombre.empty? || id_puesto.empty?
-    return "<span style='color:#9b3a3a'>Todos los campos son requeridos.</span>"
+    return msg_error(0).sub('Error desconocido (código 0)', 'Todos los campos son requeridos.')
   end
   unless cedula.match?(/\A\d+\z/)
-    return "<span style='color:#9b3a3a'>La cédula debe ser numérica.</span>"
+    return msg_error(50010)
   end
   unless nombre.match?(/\A[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\-]+\z/)
-    return "<span style='color:#9b3a3a'>El nombre debe ser alfabético.</span>"
+    return msg_error(50009)
   end
 
   codigo = Empleado.actualizar(id: params[:id], cedula: cedula, nombre: nombre,
     id_puesto: id_puesto, id_usuario: session[:usuario_id], ip: request.ip)
 
-  case codigo
-  when 0
+  if codigo == 0
     headers 'HX-Trigger' => 'empleadosActualizado'
-    "<span style='color:#2d5a4e'>Empleado actualizado correctamente.</span>"
-  when 50006 then "<span style='color:#9b3a3a'>Ya existe un empleado con esa cédula.</span>"
-  when 50007 then "<span style='color:#9b3a3a'>Ya existe un empleado con ese nombre.</span>"
-  else            "<span style='color:#9b3a3a'>Error inesperado (código #{codigo}).</span>"
+    msg_ok('Empleado actualizado correctamente.')
+  else
+    msg_error(codigo)
   end
 end
 
@@ -113,7 +118,7 @@ delete '/api/empleados/:id' do
   halt 401 unless session[:usuario]
   Empleado.borrar(id: params[:id], id_usuario: session[:usuario_id], ip: request.ip)
   headers 'HX-Trigger' => 'empleadosActualizado'
-  "<span style='color:#2d5a4e'>Empleado eliminado.</span>"
+  msg_ok('Empleado eliminado.')
 end
 
 post '/api/empleados/:id/intento-borrado' do
