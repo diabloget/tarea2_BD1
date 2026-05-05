@@ -17,6 +17,7 @@ get '/api/empleados' do
   empleados.map do |e|
     id    = e['Id']
     saldo = '%.2f' % e['SaldoVacaciones'].to_f
+    nombre_escaped = e['Nombre'].gsub("'", "\\'").gsub('"', '&quot;')
     "<tr>
       <td>#{e['ValorDocumentoIdentidad']}</td>
       <td>#{e['Nombre']}</td>
@@ -24,8 +25,9 @@ get '/api/empleados' do
       <td>#{saldo}</td>
       <td class='td-acciones'>
         <button class='btn-accion' onclick='abrirConsulta(#{id})'>Ver</button>
+        <button class='btn-accion' onclick='abrirMovimientos(#{id})'>Movimientos</button>
         <button class='btn-accion' onclick='abrirEditar(#{id})'>Editar</button>
-        <button class='btn-accion' onclick='confirmarBorrado(#{id}, \"#{e['Nombre']}\", \"#{e['ValorDocumentoIdentidad']}\")'>Borrar</button>
+        <button class='btn-accion' onclick='confirmarBorrado(#{id},\"#{nombre_escaped}\",\"#{e['ValorDocumentoIdentidad']}\")'>Borrar</button>
       </td>
     </tr>"
   end.join

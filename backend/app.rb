@@ -78,7 +78,7 @@ post '/cargar-xml' do
   end
 end
 
-# Rutas protegidas (login)
+# Rutas protegidas (login) 
 
 get '/' do
   require_login
@@ -88,3 +88,4 @@ end
 
 require_relative 'controllers/sesion_controller'
 require_relative 'controllers/empleados_controller'
+require_relative 'controllers/movimientos_controller'
